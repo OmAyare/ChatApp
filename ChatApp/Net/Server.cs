@@ -16,6 +16,8 @@ namespace ChatApp.Net
         public PacketReader PacketReader;
 
         public event Action connectedEvent;
+        public event Action msgReceivedEvent;
+        public event Action userDisconectedEvent;
         public Server()
         {
             _client = new TcpClient();
@@ -31,7 +33,7 @@ namespace ChatApp.Net
                 {
                     var connectPacket = new PacketBuilder();
                     connectPacket.WriteOpcode(0);
-                    connectPacket.WriteString(username);
+                    connectPacket.WriteMessage(username);
                     _client.Client.Send(connectPacket.GetPacketBytes());
                 }
                 ReadPackets();
@@ -49,12 +51,26 @@ namespace ChatApp.Net
                         case 1:
                             connectedEvent?.Invoke();
                             break;
+                        case 5:
+                            msgReceivedEvent?.Invoke();
+                            break;
+                        case 10:
+                            userDisconectedEvent?.Invoke();
+                            break;
                         default:
                             Console.WriteLine("ah yes......");
                             break;
                     }
                 }
             });
+        }
+
+        public void SendMessageToSeerver(string message) 
+        {
+            var messagePacket  = new PacketBuilder();
+            messagePacket.WriteOpcode(5);
+            messagePacket.WriteMessage(message);
+            _client.Client.Send(messagePacket.GetPacketBytes());
         }
     }
 }
