@@ -58,7 +58,7 @@ namespace ChatApp.Net
                             userDisconectedEvent?.Invoke();
                             break;
                         default:
-                            Console.WriteLine("ah yes......");
+                            Console.WriteLine("Connected......");
                             break;
                     }
                 }
