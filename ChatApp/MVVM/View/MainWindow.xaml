@@ -7,21 +7,24 @@
         xmlns:viewmodel="clr-namespace:ChatApp.MVVM.ViewModel"
         mc:Ignorable="d"
         Title="MainWindow" Height="472" Width="815">
-
     <Window.DataContext>
         <viewmodel:MainViewModel/>
     </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="200"/>
-            <ColumnDefinition />
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
         <DockPanel>
-            <TextBox Height="23" DockPanel.Dock="Top" Text="{Binding Username , UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Height="25" DockPanel.Dock="Top" 
+            <TextBox Height="25"
+                     DockPanel.Dock="Top"
+                     Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}"/>
+            <Button Height="25"
+                    DockPanel.Dock="Top"
                     Content="Connect"
                     Command="{Binding ConnectToServerCommand}"/>
+
             <ListView ItemsSource="{Binding Users}">
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -29,24 +32,27 @@
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
-        </DockPanel>
-
-        <StackPanel Grid.Column="1">
-            <ListView Height="380"
-                      ItemsSource="{Binding Messages}"/>
-
-            <StackPanel Orientation="Horizontal">
-                <TextBox Height="55" 
-                         Width="545"
-                         VerticalAlignment="Center"
-                         Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
-                <Button Height="55"
-                        Content="Send" 
-                        Width="50" 
-                        Command="{Binding SendMessageCommand}"/>
+            <StackPanel>
+                <Button Height="25" Content="Send Excel Data"
+                        Command="{Binding SendExcelDataCommand}"/>
 
             </StackPanel>
+        </DockPanel>
+        <StackPanel Grid.Column="1">
+            <ListView Height="380" ItemsSource="{Binding Messages}"/>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBox Height="55"
+                         Width="545"
+                         VerticalContentAlignment="Center"
+                         Text="{Binding Message, UpdateSourceTrigger=PropertyChanged}"/>
+                <Button Width="55"
+                        Content="Send"
+                        Command="{Binding SendMessageCommand}"/>
+            </StackPanel>
+
 
         </StackPanel>
+
     </Grid>
 </Window>

@@ -17,15 +17,29 @@ namespace ChatApp.Net.IO
         }
         public string ReadMessage()
         {
-            byte[] msgBuffer;
-            var length = ReadInt32();
-            msgBuffer = new byte[length];
-            _ns.Read(msgBuffer, 0, length);
+            //StringBuilder message = new StringBuilder();
+            //char c;
 
-            var msg = Encoding.ASCII.GetString(msgBuffer);
-            return msg;
+            //while ((c = (char)_ns.ReadByte()) != '\n')  // Read until newline
+            //{
+            //    if (c != '\r') // Ignore carriage return '\r'
+            //    {
+            //        message.Append(c);
+            //    }
+            //}
+
+            //return message.ToString();
+
+            byte[] buffer = new byte[1024];
+            int read = _ns.Read(buffer, 0, buffer.Length);
+            string response = string.Empty;
+            if (read > 0)
+            {
+                response = Encoding.ASCII.GetString(buffer, 0, read);
+            }
+            return response;
+
         }
-
 
     }
 }
