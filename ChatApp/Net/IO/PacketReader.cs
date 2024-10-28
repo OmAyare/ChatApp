@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace ChatApp.Net.IO
 {
@@ -14,6 +16,7 @@ namespace ChatApp.Net.IO
         public PacketReader(NetworkStream ns) : base(ns)
         {
             _ns = ns;
+
         }
         public string ReadMessage()
         {
@@ -30,16 +33,23 @@ namespace ChatApp.Net.IO
 
             //return message.ToString();
 
-            byte[] buffer = new byte[1024];
-            int read = _ns.Read(buffer, 0, buffer.Length);
-            string response = string.Empty;
-            if (read > 0)
-            {
-                response = Encoding.ASCII.GetString(buffer, 0, read);
-            }
-            return response;
 
+            /*.................................................................................................................*/
+            //byte[] buffer = new byte[1024];
+            //int read = _ns.Read(buffer, 0, buffer.Length);
+            //string response = string.Empty;
+            //if (read > 0)
+            //{
+            //    response = Encoding.ASCII.GetString(buffer, 0, read);
+            //}
+            //return response;
+
+
+            /*.................................................................................................................*/
+        
+            var msgLength = ReadInt32(); // Read message length
+            byte[] msgBytes = ReadBytes(msgLength); // Read the actual message
+            return Encoding.UTF8.GetString(msgBytes); // Convert to string
         }
-
     }
 }

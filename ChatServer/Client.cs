@@ -27,10 +27,10 @@ namespace ChatServer
 
             Console.WriteLine($"[{DateTime.Now}]: Client has connected with the username: {Username}");
 
-            Task.Run(() => process()); 
+            Task.Run(() => Process());
         }
 
-        void process()
+        void Process()
         {
             while (true)
             {
@@ -41,24 +41,44 @@ namespace ChatServer
                     {
                         case 5:
                             var msg = _packetReader.ReadMessage();
-                            Console.WriteLine($"[{DateTime.Now}]:Message Received! {msg}");
-                            Program.BroadcastMessage($"[{DateTime.Now}]:[{Username}]: {msg}" );
+                            Console.WriteLine($"[{DateTime.Now}]: Message Received! {msg}");
+                            Program.BroadcastMessage($"[{DateTime.Now}]: [{Username}]: {msg}");
+
+                            SendAcknowledgment("ACK");
+
                             break;
                         default:
                             break;
-
                     }
-
                 }
                 catch (Exception)
                 {
-                    Console.WriteLine($"[{UID.ToString()}]: Dissconected!");
+                    Console.WriteLine($"[{UID.ToString()}]: Disconnected!");
                     Program.BroadcastDisconnect(UID.ToString());
                     ClientSocket.Close();
                     break;
-                    
                 }
             }
         }
+
+        private void SendAcknowledgment(string ackMessage)
+        {
+            try
+            {
+                var ackPacket = new PacketBuilder();
+                ackPacket.WriteOpcode(6);  // Opcode for acknowledgment
+                ackPacket.WriteMessage("ACK\r\n");  // Acknowledgment message
+                ClientSocket.Client.Send(ackPacket.GetPacketBytes());
+                Console.WriteLine("Acknowledgement sent to client.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to send acknowledgment : {ex.Message}");
+            }
+
+
+        }
+
+
     }
 }

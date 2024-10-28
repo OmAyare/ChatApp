@@ -7,11 +7,13 @@ using System.Threading.Tasks;
 using ChatApp.Net.IO;
 using System.IO;
 using ClosedXML.Excel;
+using System.Net;
 
 namespace ChatApp.Net
 {
     public class Server
     {
+
         TcpClient _client;
         public PacketReader PacketReader;
 
@@ -19,6 +21,7 @@ namespace ChatApp.Net
         public event Action msgReceivedEvent;
         public event Action userDisconnectEvent;
 
+        public event Action<string> acknowledgmentReceivedEvent;
         public Server()
         {
             _client = new TcpClient();
@@ -53,10 +56,14 @@ namespace ChatApp.Net
                         case 1:
                             connectedEvent?.Invoke();
                             break;
-                        case 5:
+                        case 7:
                             msgReceivedEvent?.Invoke();
-
                             break;
+                        case 6: // Handle acknowledgment
+                            var acknowledgment = PacketReader.ReadMessage();
+                            acknowledgmentReceivedEvent?.Invoke(acknowledgment);
+                            break;
+
                         case 10:
                             userDisconnectEvent?.Invoke();
                             break;
@@ -77,42 +84,41 @@ namespace ChatApp.Net
             _client.Client.Send(messagePacket.GetPacketBytes());
         }
 
-        public async Task SendExcelDataToServer(string filePath)
+
+        public async  Task SendExcelDataToServer(string filePath)
         {
             var rows = ReadExcelData(filePath);
             int currentRowIndex = 0; // Track the current row being sent
 
-            while (currentRowIndex < rows.Count)
+            // Set up an event handler for acknowledgment
+            acknowledgmentReceivedEvent += (ack) =>
             {
-                var currentRow = rows[currentRowIndex];
-                var formattedData = FormatData(currentRow);
-                bool ackReceived = false;
-
-                // Retry sending the current row until acknowledgment is received
-                while (!ackReceived)
+                if (ack.StartsWith("ACK")) // Check for valid ACK
                 {
-                    // Send the current row to the server
-                    SendMessageToServer(formattedData);
-                    Console.WriteLine($"Sending row {currentRowIndex + 1}: {formattedData}");
-
-                    // Wait for acknowledgment
-                    ackReceived = await WaitForAcknowledgmentAsync();
-
-                    // If acknowledgment not received, log it for debugging
-                    if (!ackReceived)
+                    currentRowIndex++; // Move to the next row
+                    if (currentRowIndex < rows.Count)
                     {
-                        Console.WriteLine($"Acknowledgment not received for row {currentRowIndex + 1}, retrying...");
+                        // Format and send the next row
+                        var nextRow = rows[currentRowIndex];
+                        var formattedData = FormatData(nextRow);
+                        SendMessageToServer(formattedData);
+                        Console.WriteLine($"Sending row {currentRowIndex + 1}: {formattedData}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("All rows have been sent successfully.");
                     }
                 }
+            };
 
-                // Once acknowledgment is received, move to the next row
-                Console.WriteLine($"Row {currentRowIndex + 1} sent successfully!");
-                currentRowIndex++; // Move to the next row
+            // Start by sending the first row
+            if (rows.Any())
+            {
+                var formattedData = FormatData(rows[currentRowIndex]);
+                SendMessageToServer(formattedData);
+                Console.WriteLine($"Sending row 1: {formattedData}");
             }
-
-            Console.WriteLine("All rows have been sent successfully.");
         }
-
         private List<Dictionary<string, string>> ReadExcelData(string filePath)
         {
             var data = new List<Dictionary<string, string>>();
@@ -133,6 +139,7 @@ namespace ChatApp.Net
                     };
 
                     data.Add(rowData);
+
                 }
             }
 
@@ -144,9 +151,6 @@ namespace ChatApp.Net
 
             return $"Name={row["Name"]};Age={row["Age"]};Gender={row["Gender"]};City={row["City"]}";
         }
-
-
-        public event Action<string> acknowledgmentReceivedEvent;
 
         private async Task<bool> WaitForAcknowledgmentAsync()
         {
@@ -170,14 +174,10 @@ namespace ChatApp.Net
                     Console.WriteLine("Received alternative acknowledgment (CK), proceeding to next row.");
                     return true; // Proceed even if it’s CK
                 }
-
                 // Log unexpected acknowledgment for debugging
                 Console.WriteLine("Unexpected acknowledgment received, retrying...");
-                await Task.Delay(50); // Wait a bit before retrying
+                await Task.Delay(50); // Wait a bit before
             }
         }
-
-
-
     }
 }
